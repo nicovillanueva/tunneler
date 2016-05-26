@@ -1,0 +1,37 @@
+tunnels:
+    # Desarrollo
+    - 18081:localhost:80         # DC/OS
+    - 18082:localhost:8080       # Marathon
+    - 18181:localhost:8181       # Exhibitor
+    - 18085:host1:8085           # Nexus
+    - 5000:host1:5000            # Registry
+    - 18082:host1:8080           # Jenkins
+    - 19090:host1:9090           # HAProxy
+
+    # Test
+    - 19000:host2:10000          # Back
+    - 19001:host2:10001          # Front
+    - 18080:host2:10010          # Something
+
+
+logging:
+    console: true
+
+hops:
+    - jump1:
+        host: 1.1.1.1
+        user: user1
+        auth:
+            key: ~/.ssh/mykey
+
+    - jump2:
+        host: 1.1.2.1
+        user: someuser
+        auth:
+            password: "123456"
+
+    - jump3:
+        host: 172.0.12.12
+        user: secureuser
+        auth:
+            password: "superpassword"
