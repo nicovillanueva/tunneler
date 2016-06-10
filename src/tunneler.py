@@ -2,6 +2,7 @@
 
 import sys
 import os
+import signal
 import yaml
 import pexpect
 import argparse
@@ -101,7 +102,7 @@ def connect_with_key(host, user, key, ports):
         exit(1)
     elif res == 1:
         log.info('Connected to {}'.format(host))
-        return
+        return session.pid
     elif res == 2:
         session.sendline('yes')
     elif res == 3:
@@ -113,7 +114,7 @@ def connect_with_key(host, user, key, ports):
     res = session.expect(get_expectations())
     if res == 1:
         log.info('Connected to {}'.format(host))
-        return
+        return session.pid
     else:
         log.error('Error while connecting to {}. Aborting.'.format(host))
         log.error('Either run with logging activated, or SSH manually!')
@@ -143,7 +144,7 @@ def connect_with_password(host, user, password, ports):
     elif res == 1:
         if verify_logged_in():
             log.info('Password not needed')
-            return
+            return session.pid
         else:
             res = 4
     elif res == 2:
@@ -161,7 +162,7 @@ def connect_with_password(host, user, password, ports):
     if res in (1, 6):
         if verify_logged_in():
             log.info('Connected to {}'.format(host))
-            return
+            return session.pid
         else:
             log.error('Error while connecting to {}. Aborting.'.format(host))
             exit(1)
@@ -228,6 +229,7 @@ def main():
     [all_tunnels.append(Tunnel(t)) for t in tunnels]
     hops = config.get('hops')
     for i, hop in enumerate(hops):
+        pid_stack = []
         key = list(hop.keys())[0]
         h = hop[key]
         hop = Hop(key, h, i)
@@ -238,14 +240,16 @@ def main():
             else:
                 for tun in all_tunnels:
                     tunnels.append(tun.get_localhost_mapping())
-            connect_with_key(hop.host, hop.user, hop.auth, tunnels)
+            p = connect_with_key(hop.host, hop.user, hop.auth, tunnels)
+            pid_stack.append(p)
         else:
             if hop.index == len(hops) - 1:
                 [tunnels.append(each.mapping) for each in all_tunnels]
             else:
                 for tun in all_tunnels:
                     tunnels.append(tun.get_localhost_mapping())
-            connect_with_password(hop.host, hop.user, hop.auth, tunnels)
+            p = connect_with_password(hop.host, hop.user, hop.auth, tunnels)
+            pid_stack.append(p)
 
     log.info('Tunneling done:')
     [log.info(t) for t in all_tunnels]
@@ -259,7 +263,11 @@ def main():
             log.info('Disconnected from {}'.format(alias))
         else:
             log.warn('Connection to {} forcefully closed'.format(alias))
-            pass
+    try:
+        os.kill(pid_stack[0], signal.SIGKILL)
+        log.warn('Killed off remaining SSH process')
+    except ProcessLookupError:
+        pass
     log.info('Done')
 
 if __name__ == '__main__':
