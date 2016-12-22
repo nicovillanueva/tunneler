@@ -1,7 +1,7 @@
-# Hypertunnel
+# Tunneler
 
 ## Configuration
-By default, hypertunnel searches for a `config.yml` file next to it. You can set the path to a different one by the `-c` parameter.
+By default, tunneler searches for a `config.yml` file next to it. You can set the path to a different one by the `-c` parameter.
 
 The configuration file is made up of 2 (well, 3) sections: `tunnels` and `hops` (and `logging`)
 
@@ -27,11 +27,11 @@ Requirements are listed in `requirements.txt`. As always, recommended to use vir
 Also it's possible to run this with Docker. However, you may have to mount the `config.yml` with volumes. Same with the SSH key. And not to mention that you need to give it access to your network.
 
 #### Example
-After `docker build -t hypertunnel .`,
+After `docker build -t tunneler .`,
 
     docker run -ti -v $HOME/.ssh/mykey:/root/.ssh/mykey:ro \
                -v $(pwd)/src/config.yml:/data/config.yml:ro \
-               --rm --net=host hypertunnel
+               --rm --net=host tunneler
 
 
 ## TODO:
