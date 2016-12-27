@@ -1,7 +1,7 @@
 # Tunneler
 
 ## Configuration
-By default, tunneler searches for a `config.yml` file next to it. You can set the path to a different one by the `-c` parameter.
+By default, tunneler searches for a `config.yml` file next to it. You can set the path to a different one by providing it as  a parameter.
 
 The configuration file is made up of 2 (well, 3) sections: `tunnels` and `hops` (and `logging`)
 
