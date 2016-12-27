@@ -19,7 +19,7 @@ if h1.get('auth') is not None:
         else:
             inner = k
             outer = k
-        print('-v {}:{}'.format(outer, inner))
+        print('-v "{}":"{}"'.format(outer, inner))
     else:
         # No key, no mount
         print()

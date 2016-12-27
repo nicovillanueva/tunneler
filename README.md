@@ -27,6 +27,8 @@ Requirements are listed in `requirements.txt`. As always, recommended to use vir
 Also it's possible to run this with Docker. You can use the script `run-dockerized.sh` for this.  
 It automatically manages the mounting of config yaml and local SSH key, if applicable.
 
+This script still needs `PyYAML`, so doing `pip3 install PyYAML` is in order.
+
 #### Example
 After `docker build -t tunneler .`,
 
@@ -38,7 +40,5 @@ After `docker build -t tunneler .`,
     
     bash run-dockerized.sh ./src/config.yaml
 
-
-## TODO:
-- Randomize intermediate ports
-- Clean up created ports if shit went down
+## TODO
+- Key path in yaml: Support spaces
