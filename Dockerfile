@@ -8,4 +8,4 @@ RUN apt-get clean
 COPY src/ /data
 RUN pip install -r /data/requirements.txt
 WORKDIR /data
-CMD ["python", "tunneler.py"]
+ENTRYPOINT ["python", "tunneler.py"]

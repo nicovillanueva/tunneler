@@ -24,7 +24,8 @@ The `key` should be a relative or absolute path to the authentication RSA key. E
 Requirements are listed in `requirements.txt`. As always, recommended to use virtualenvs.
 
 ### Docker
-Also it's possible to run this with Docker. However, you may have to mount the `config.yml` with volumes. Same with the SSH key. And not to mention that you need to give it access to your network.
+Also it's possible to run this with Docker. You can use the script `run-dockerized.sh` for this.  
+It automatically manages the mounting of config yaml and local SSH key, if applicable.
 
 #### Example
 After `docker build -t tunneler .`,
@@ -32,6 +33,10 @@ After `docker build -t tunneler .`,
     docker run -ti -v $HOME/.ssh/mykey:/root/.ssh/mykey:ro \
                -v $(pwd)/src/config.yml:/data/config.yml:ro \
                --rm --net=host tunneler
+               
+    # or...
+    
+    bash run-dockerized.sh ./src/config.yaml
 
 
 ## TODO:

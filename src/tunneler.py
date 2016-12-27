@@ -11,11 +11,13 @@ import time
 from collections import OrderedDict
 
 parser = argparse.ArgumentParser()
-parser.add_argument('-c', '--config', required=False, help='Configuration file to use')
+# parser.add_argument('-c', '--config', required=False, help='Configuration file to use')
+parser.add_argument('config', default='config.yml', help='Configuration file to use')
 args = parser.parse_args()
 
 session = None
 logging = None
+disconnection_timeout = 2
 
 # TODO: Definitely better 'login ok' expectation
 expectations = OrderedDict((
@@ -82,7 +84,6 @@ class Tunnel(object):
 def connect_with_key(host, user, key, ports):
     global session
     log.info('Connecting to {} using key'.format(host))
-    # REVIEW: removed tty and sh. test.
     cmd = 'ssh -L {ports} -i {key} {usr}@{host}'.format(ports=' -L '.join(ports),
                                                         key=key.replace('~', os.path.expanduser('~')),
                                                         usr=user,
@@ -184,18 +185,16 @@ def set_up_logging():
     if logging.get('file') is not None:
         # TODO: Log to file
         log.error('Log to file no implemented. Yet.')
-        #log.warn('Logging to', logging.get('file'))
-        #session.logfile = open(logging.get('file'), 'wb')
     elif logging.get('console'):
         session.logfile = sys.stdout
     else:
         log.warn('Logging disabled')
 
 
-def logout():
+def logout(timeout: int):
     global session
     session.sendline('exit')
-    r = session.expect([pexpect.EOF, 'Connection to', pexpect.TIMEOUT], timeout=5)
+    r = session.expect([pexpect.EOF, 'Connection to', pexpect.TIMEOUT], timeout=timeout)
     if r in (0, 1):
         return True
     else:
@@ -204,9 +203,8 @@ def logout():
         return False
 
 
-def verify_logged_in():
+def verify_logged_in() -> bool:
     global session
-    # session.sendline('unset PROMPT_COMMAND')
     session.sendline('PS1="TUNNELING"')
     r = session.expect(['TUNNELING$', pexpect.TIMEOUT], timeout=5)
     if r == 1:
@@ -218,8 +216,9 @@ def verify_logged_in():
 def main():
     global session
     global logging
+    global disconnection_timeout
 
-    c = args.config or 'config.yml'  # TODO: Move defaulting to argparse
+    c = args.config
     log.info('Using: {}'.format(os.path.join(os.path.dirname(os.path.abspath(c)), c)))
     with open(c) as f:
         config = yaml.load(f)
@@ -251,18 +250,30 @@ def main():
             p = connect_with_password(hop.host, hop.user, hop.auth, tunnels)
             pid_stack.append(p)
 
+    session.sendline('while [ 1=1 ]; do echo \'keepalive\' ; sleep 3 ; done')
     log.info('Tunneling done:')
     [log.info(t) for t in all_tunnels]
 
-    # TODO: Watch for broken pipe
-    input("Press ENTER to disconnect")
+    # TODO: Watch for broken pipe?
+    try:
+        input("Press ENTER to disconnect")
+        print()
+    except KeyboardInterrupt:
+        log.error('Getting out of here!')
+        disconnection_timeout = 0
     for h in reversed(hops):
         alias = list(h.keys())[0]
-        r = logout()
+        log.info("Disconnecting from {}".format(alias))
+        try:
+            r = logout(disconnection_timeout)
+        except KeyboardInterrupt:
+            log.warn("Hurrying up.")
+            r = None
+            disconnection_timeout = 0
         if r:
-            log.info('Disconnected from {}'.format(alias))
+            log.info('Disconnected')
         else:
-            log.warn('Connection to {} forcefully closed'.format(alias))
+            log.warn('Connection forcefully closed')
     try:
         os.kill(pid_stack[0], signal.SIGKILL)
         log.warn('Killed off remaining SSH process')
