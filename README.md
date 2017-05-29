@@ -42,3 +42,4 @@ After `docker build -t tunneler .`,
 
 ## TODO
 - Key path in yaml: Support spaces
+- Work around the usability of the dockerized mode. Does it even work?
